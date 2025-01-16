@@ -25,6 +25,14 @@ func PopCountWithTable(x uint64) int {
 		pc[byte(x>>(7*8))])
 }
 
+func PopCountWithTableInLoop(x uint64) int {
+	popCount := 0
+	for i := 0; i < 8; i++ {
+		popCount += int(pc[byte(x>>(i*8))])
+	}
+	return popCount
+}
+
 func PopCountInLoop(x uint64) int {
 	popCount := 0
 	for x > 0 {
@@ -34,16 +42,27 @@ func PopCountInLoop(x uint64) int {
 	return popCount
 }
 
+func PopCountUsingBitClear(x uint64) int {
+	popCount := 0
+	for x > 0 {
+		popCount++
+		x &= x - 1
+	}
+	return popCount
+}
+
 func main() {
 	randomNum := rand.Uint64()
 
 	runTest(randomNum, PopCountWithTable)
+	runTest(randomNum, PopCountWithTableInLoop)
 	runTest(randomNum, PopCountInLoop)
+	runTest(randomNum, PopCountUsingBitClear)
 }
 
 func runTest(randomNum uint64, fn func(x uint64) int) {
 	start := time.Now()
-	for i := 0; i < 10_000_000; i++ {
+	for i := 0; i < 100_000_000; i++ {
 		fn(randomNum)
 	}
 	res := fn(randomNum)
