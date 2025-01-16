@@ -14,13 +14,12 @@ func main() {
 		if err != nil {
 			log.Fatalln(fmt.Errorf("http get error: %w", err))
 		}
-		body, err := io.ReadAll(res.Body)
+		_, err = io.Copy(os.Stdout, res.Body)
 		if err := res.Body.Close(); err != nil {
 			log.Println(fmt.Errorf("http body close error: %w", err))
 		}
 		if err != nil {
 			log.Fatalln(fmt.Errorf("http body read error: %w", err))
 		}
-		fmt.Printf("%s", body)
 	}
 }
