@@ -18,6 +18,7 @@ func main() {
 		if err != nil {
 			log.Fatalln(fmt.Errorf("http get error: %w", err))
 		}
+		fmt.Printf("Status code: %d\n", res.StatusCode)
 		_, err = io.Copy(os.Stdout, res.Body)
 		if err := res.Body.Close(); err != nil {
 			log.Println(fmt.Errorf("http body close error: %w", err))
