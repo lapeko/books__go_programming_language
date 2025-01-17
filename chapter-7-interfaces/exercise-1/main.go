@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 )
 
@@ -53,6 +54,25 @@ func (c *LineCounter) Write(p []byte) (int, error) {
 	return counter, nil
 }
 
+type cWriter struct {
+	w       io.Writer
+	counter *int64
+}
+
+func (c *cWriter) Write(p []byte) (n int, err error) {
+	n, err = c.w.Write(p)
+	*c.counter += int64(n)
+	return n, err
+}
+
+func CountingWriter(w io.Writer) (io.Writer, *int64) {
+	var counter int64
+
+	var c = &cWriter{w, &counter}
+
+	return c, &counter
+}
+
 func main() {
 	//var c ByteCounter
 	//c.Write([]byte("Hi there"))
@@ -70,4 +90,11 @@ func main() {
 	var l LineCounter
 	fmt.Fprint(&l, "qasasdasdw asd\nasdasd we qweqwe")
 	fmt.Println(l)
+
+	writer, b := CountingWriter(os.Stdout)
+	size, _ := writer.Write([]byte("Hi there\n"))
+	fmt.Println("Size: ", size)
+	size, _ = writer.Write([]byte("How are you?\n"))
+	fmt.Println("Size: ", size)
+	fmt.Println("Total size: ", *b)
 }
