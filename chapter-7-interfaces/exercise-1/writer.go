@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/lapeko/books__go_programming_language/chapter-7-interfaces/num"
 	"io"
 	"log"
 	"os"
@@ -57,7 +58,7 @@ func (flw *fileLogWriter) Write(p []byte) (n int, err error) {
 		}
 
 		freeFileSpace := logFileSize - int(stat.Size())
-		nextChunkSize := minNum(freeFileSpace, bytesToWrite)
+		nextChunkSize := num.Min(freeFileSpace, bytesToWrite)
 
 		if freeFileSpace == nextChunkSize {
 			flw.currentLogFileNum++
