@@ -122,23 +122,6 @@ func getLogFilePath(fileNum int) string {
 	return filepath.Join(logFolderName, fileName)
 }
 
-type num interface {
-	int | int8 | int16 | int32 | int64 | float32 | float64
-}
-
-func minNum[T num](a T, b T) T {
-	if a < b {
-		return a
-	}
-	return b
-}
-func maxNum[T num](a T, b T) T {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 func openForAppend(logFileNum int) (*os.File, error) {
 	file, err := os.OpenFile(getLogFilePath(logFileNum), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0755)
 	if err != nil {
