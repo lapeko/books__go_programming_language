@@ -19,7 +19,7 @@ func main() {
 			log.Println(err)
 			continue
 		}
-		handleConn(conn)
+		go handleConn(conn)
 	}
 }
 
@@ -30,8 +30,9 @@ func handleConn(conn net.Conn) {
 		}
 	}(conn)
 	for {
-		now := time.Now().Format("01.02.2006 15:04.05:000\n")
-		if _, err := conn.Write([]byte(now)); err != nil {
+		now := time.Now()
+		withMilliseconds := now.Truncate(time.Millisecond).Format("15:04:05.000\n")
+		if _, err := conn.Write([]byte(withMilliseconds)); err != nil {
 			return
 		}
 		time.Sleep(time.Second)
