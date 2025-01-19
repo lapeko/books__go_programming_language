@@ -14,8 +14,12 @@ func main() {
 	}()
 
 	go func() {
-		for num := range natural { // Читаем из канала `natural` до его закрытия
-			squares <- num * num
+		for {
+			nat, ok := <-natural
+			if !ok {
+				break
+			}
+			squares <- nat * nat
 		}
 		close(squares)
 	}()
