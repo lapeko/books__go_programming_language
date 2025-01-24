@@ -21,15 +21,13 @@ func (t *tree) add(value int) *tree {
 }
 
 func (t *tree) getValues() (values []int) {
-	if t.left != nil {
+	if t != nil {
 		values = append(values, t.left.getValues()...)
-	}
-	values = append(values, t.value)
-	if t.right != nil {
+		values = append(values, t.value)
 		values = append(values, t.right.getValues()...)
 	}
 
-	return values
+	return
 }
 
 func main() {
