@@ -19,8 +19,17 @@ func main() {
 	}()
 
 	go func() {
-		for n := range naturals {
-			squares <- n * n
+		defer close(squares)
+		for {
+			select {
+			case <-shutdown:
+				return
+			case n, ok := <-naturals:
+				if !ok {
+					return
+				}
+				squares <- n * n
+			}
 		}
 	}()
 
