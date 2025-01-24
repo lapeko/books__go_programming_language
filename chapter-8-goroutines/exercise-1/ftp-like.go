@@ -24,7 +24,7 @@ func main() {
 			log.Printf("incomming request failed: %v", err)
 			continue
 		}
-		handleRequest(conn)
+		go handleRequest(conn)
 	}
 }
 
