@@ -7,38 +7,44 @@ func main() {
 	shutdown := make(chan struct{})
 	squares := make(chan int)
 
-	go func() {
-		defer close(naturals)
-		for i := 1; ; i++ {
-			select {
-			case <-shutdown:
-				return
-			case naturals <- i:
-			}
-		}
-	}()
+	go genNaturals(naturals, shutdown)
+	go squareNaturals(naturals, squares, shutdown)
+	runPipeTill(10_000, squares, shutdown)
+}
 
-	go func() {
-		defer close(squares)
-		for {
-			select {
-			case <-shutdown:
-				return
-			case n, ok := <-naturals:
-				if !ok {
-					return
-				}
-				squares <- n * n
-			}
+func genNaturals(nts chan<- int, shn <-chan struct{}) {
+	defer close(nts)
+	for i := 1; ; i++ {
+		select {
+		case <-shn:
+			return
+		case nts <- i:
 		}
-	}()
+	}
+}
 
+func squareNaturals(nts <-chan int, sqs chan<- int, shn <-chan struct{}) {
+	defer close(sqs)
 	for {
-		s := <-squares
-		if s > 10_000 {
-			close(shutdown)
+		select {
+		case <-shn:
+			return
+		case n, ok := <-nts:
+			if !ok {
+				return
+			}
+			sqs <- n * n
+		}
+	}
+}
+
+func runPipeTill(maxNum int, sqs <-chan int, shn chan<- struct{}) {
+	for {
+		sq := <-sqs
+		if sq > maxNum {
+			close(shn)
 			return
 		}
-		fmt.Println(s)
+		fmt.Println(sq)
 	}
 }
