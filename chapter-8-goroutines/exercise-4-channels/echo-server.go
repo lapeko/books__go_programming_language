@@ -26,16 +26,38 @@ func main() {
 	}
 }
 
+const duration = time.Second * 10
+
 func handleConn(conn net.Conn) {
+	scanner := bufio.NewScanner(conn)
+	text := make(chan string)
+	timer := time.NewTimer(duration)
+
 	defer conn.Close()
+	defer timer.Stop()
+	defer fmt.Println("client disconnected")
+
 	fmt.Println("new connection accepted")
 
-	scanner := bufio.NewScanner(conn)
-	for scanner.Scan() {
-		go echo(conn, scanner.Text())
-	}
+	go func() {
+		for scanner.Scan() {
+			text <- scanner.Text()
+		}
+		close(text)
+	}()
 
-	fmt.Println("completed")
+	for {
+		select {
+		case <-timer.C:
+			close(text)
+		case t, ok := <-text:
+			if !ok {
+				return
+			}
+			timer.Reset(duration)
+			go echo(conn, t)
+		}
+	}
 }
 
 func echo(conn net.Conn, text string) {
