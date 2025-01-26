@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"time"
 )
 
 type client struct {
@@ -13,7 +14,10 @@ type client struct {
 }
 type clients map[string]*client
 
-const PORT = ":8000"
+const (
+	PORT                      = ":8000"
+	DISCONNECT_CLIENT_TIMEOUT = time.Minute * 10
+)
 
 func main() {
 	listener, err := net.Listen("tcp", PORT)
@@ -40,26 +44,44 @@ func main() {
 }
 
 func acceptConnect(conn net.Conn, clientMap clients, br chan<- string) {
-	msg := make(chan string)
-	defer close(msg)
-
-	sendConnectedClients(conn, clientMap)
-
-	addr := conn.RemoteAddr().String()
-
-	if c, ok := clientMap[addr]; ok {
-		c.conn.Close()
-	}
-	c := &client{conn: conn, inMsg: msg}
-	clientMap[addr] = c
-	go runWriter(c)
+	sendGreetMessage(conn, clientMap)
 
 	scanner := bufio.NewScanner(conn)
+	var clientName string
 	for scanner.Scan() {
+		clientName = scanner.Text()
+		if _, ok := clientMap[clientName]; ok {
+			fmt.Fprintf(conn, "The name %s has already taken. Try another name: ", clientName)
+			continue
+		} else {
+			log.Printf("User %s connection sucess\n", clientName)
+			fmt.Fprintf(conn, "Hi, %s!\n", clientName)
+			break
+		}
+	}
+
+	msg := make(chan string)
+	defer close(msg)
+	defer delete(clientMap, clientName)
+
+	c := &client{conn: conn, inMsg: msg}
+	clientMap[clientName] = c
+	go runWriter(c)
+
+	timer := time.NewTimer(DISCONNECT_CLIENT_TIMEOUT)
+	go func() {
+		<-timer.C
+		fmt.Fprintln(conn, "Timout disconnect...")
+		log.Printf("User %s timeout disconnect\n", clientName)
+		conn.Close()
+	}()
+
+	for scanner.Scan() {
+		timer.Reset(DISCONNECT_CLIENT_TIMEOUT)
 		br <- scanner.Text()
 	}
 
-	fmt.Println("Exit")
+	log.Printf("User %s disconnected\n", clientName)
 }
 
 func runWriter(c *client) {
@@ -76,13 +98,14 @@ func runBroadcasting(clientMap clients, br <-chan string) {
 	}
 }
 
-func sendConnectedClients(conn net.Conn, c clients) {
+func sendGreetMessage(conn net.Conn, c clients) {
 	fmt.Fprint(conn, "Connected clients: [")
 	if len(c) != 0 {
 		fmt.Fprintln(conn)
 	}
 	for addr := range c {
-		fmt.Fprintf(conn, "\t%s\n", addr)
+		fmt.Fprintf(conn, "\t\"%s\"\n", addr)
 	}
 	fmt.Fprintln(conn, "]")
+	fmt.Fprint(conn, "Enter your client name: ")
 }
