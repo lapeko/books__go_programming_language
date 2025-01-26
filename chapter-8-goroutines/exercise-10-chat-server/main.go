@@ -43,7 +43,10 @@ func acceptConnect(conn net.Conn, clientMap clients, br chan<- string) {
 	msg := make(chan string)
 	defer close(msg)
 
-	addr := conn.LocalAddr().String()
+	sendConnectedClients(conn, clientMap)
+
+	addr := conn.RemoteAddr().String()
+
 	if c, ok := clientMap[addr]; ok {
 		c.conn.Close()
 	}
@@ -71,4 +74,15 @@ func runBroadcasting(clientMap clients, br <-chan string) {
 			c.inMsg <- msg
 		}
 	}
+}
+
+func sendConnectedClients(conn net.Conn, c clients) {
+	fmt.Fprint(conn, "Connected clients: [")
+	if len(c) != 0 {
+		fmt.Fprintln(conn)
+	}
+	for addr := range c {
+		fmt.Fprintf(conn, "\t%s\n", addr)
+	}
+	fmt.Fprintln(conn, "]")
 }
