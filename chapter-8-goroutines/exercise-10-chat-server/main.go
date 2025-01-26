@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sync"
 	"time"
 )
 
@@ -26,6 +27,8 @@ const (
 	PORT                      = ":8000"
 	DISCONNECT_CLIENT_TIMEOUT = time.Minute * 10
 )
+
+var mut = sync.Mutex{}
 
 func main() {
 	listener, err := net.Listen("tcp", PORT)
@@ -55,15 +58,18 @@ func acceptConnect(conn net.Conn, clientMap clients, br chan<- *message) {
 	sendGreetMessage(conn, clientMap)
 
 	scanner := bufio.NewScanner(conn)
-	clientName := "Unknown"
+	clientName := conn.RemoteAddr().String()
 	for scanner.Scan() {
 		clientName = scanner.Text()
+		mut.Lock()
 		if _, ok := clientMap[clientName]; ok {
 			fmt.Fprintf(conn, "The name %s has already taken. Try another name: ", clientName)
+			mut.Unlock()
 			continue
 		} else {
 			log.Printf("User \"%s\" connection success\n", clientName)
 			fmt.Fprintf(conn, "Hi, %s!\n", clientName)
+			mut.Unlock()
 			break
 		}
 	}
@@ -71,8 +77,15 @@ func acceptConnect(conn net.Conn, clientMap clients, br chan<- *message) {
 	msg := make(chan *message)
 	defer close(msg)
 
+	mut.Lock()
 	clientMap[clientName] = &client{conn: conn, inMsg: msg, name: clientName}
-	defer delete(clientMap, clientName)
+	mut.Unlock()
+
+	defer func() {
+		mut.Lock()
+		delete(clientMap, clientName)
+		mut.Unlock()
+	}()
 
 	go runWriter(clientMap[clientName])
 
@@ -142,13 +155,18 @@ func runWriter(c *client) {
 
 func runBroadcasting(clientMap clients, br <-chan *message) {
 	for msg := range br {
+		mut.Lock()
 		for _, c := range clientMap {
 			c.inMsg <- msg
 		}
+		mut.Unlock()
 	}
 }
 
 func sendGreetMessage(conn net.Conn, c clients) {
+	mut.Lock()
+	defer mut.Unlock()
+
 	fmt.Fprint(conn, "Connected clients: [")
 	if len(c) != 0 {
 		fmt.Fprintln(conn)
