@@ -1,3 +1,5 @@
+// TODO improvements: broadcast incoming and leaving users
+
 package main
 
 import (
@@ -8,8 +10,14 @@ import (
 	"time"
 )
 
+type message struct {
+	sender string
+	text   string
+}
+
 type client struct {
-	inMsg chan string
+	name  string
+	inMsg chan *message
 	conn  net.Conn
 }
 type clients map[string]*client
@@ -29,7 +37,7 @@ func main() {
 	log.Printf("TCP server work on port %s\n", PORT)
 
 	clientMap := make(clients)
-	broadcast := make(chan string)
+	broadcast := make(chan *message)
 
 	go runBroadcasting(clientMap, broadcast)
 
@@ -43,54 +51,96 @@ func main() {
 	}
 }
 
-func acceptConnect(conn net.Conn, clientMap clients, br chan<- string) {
+func acceptConnect(conn net.Conn, clientMap clients, br chan<- *message) {
 	sendGreetMessage(conn, clientMap)
 
 	scanner := bufio.NewScanner(conn)
-	var clientName string
+	clientName := "Unknown"
 	for scanner.Scan() {
 		clientName = scanner.Text()
 		if _, ok := clientMap[clientName]; ok {
 			fmt.Fprintf(conn, "The name %s has already taken. Try another name: ", clientName)
 			continue
 		} else {
-			log.Printf("User %s connection sucess\n", clientName)
+			log.Printf("User \"%s\" connection success\n", clientName)
 			fmt.Fprintf(conn, "Hi, %s!\n", clientName)
 			break
 		}
 	}
 
-	msg := make(chan string)
+	msg := make(chan *message)
 	defer close(msg)
+
+	clientMap[clientName] = &client{conn: conn, inMsg: msg, name: clientName}
 	defer delete(clientMap, clientName)
 
-	c := &client{conn: conn, inMsg: msg}
-	clientMap[clientName] = c
-	go runWriter(c)
+	go runWriter(clientMap[clientName])
 
 	timer := time.NewTimer(DISCONNECT_CLIENT_TIMEOUT)
+	defer timer.Stop()
+
 	go func() {
 		<-timer.C
 		fmt.Fprintln(conn, "Timout disconnect...")
-		log.Printf("User %s timeout disconnect\n", clientName)
+		log.Printf("User \"%s\" timeout disconnect\n", clientName)
 		conn.Close()
 	}()
 
 	for scanner.Scan() {
 		timer.Reset(DISCONNECT_CLIENT_TIMEOUT)
-		br <- scanner.Text()
+		br <- &message{sender: clientName, text: scanner.Text()}
 	}
 
-	log.Printf("User %s disconnected\n", clientName)
+	log.Printf("User \"%s\" disconnected\n", clientName)
 }
 
 func runWriter(c *client) {
-	for m := range c.inMsg {
-		fmt.Fprintln(c.conn, m)
+	buf := make([]*message, 0, 10)
+	retryAttempts := 0
+	retryTimer := time.NewTimer(0)
+	retryTimer.Stop()
+
+	defer retryTimer.Stop()
+
+	sendBufferedMessages := func() {
+		for idx, msg := range buf {
+			if err := printMessage(c, msg); err == nil {
+				buf = buf[idx+1:]
+				retryAttempts = 0
+			} else {
+				if retryAttempts >= 10 {
+					c.conn.Close()
+					return
+				}
+				retryTimer.Reset(time.Second)
+				retryAttempts++
+				break
+			}
+		}
+	}
+
+	for {
+		select {
+		case m, ok := <-c.inMsg:
+			if !ok {
+				return
+			}
+			if len(buf) >= cap(buf) {
+				c.conn.Close()
+				return
+			}
+			retryTimer.Stop()
+			buf = append(buf, m)
+			sendBufferedMessages()
+		case _, ok := <-retryTimer.C:
+			if ok {
+				sendBufferedMessages()
+			}
+		}
 	}
 }
 
-func runBroadcasting(clientMap clients, br <-chan string) {
+func runBroadcasting(clientMap clients, br <-chan *message) {
 	for msg := range br {
 		for _, c := range clientMap {
 			c.inMsg <- msg
@@ -108,4 +158,13 @@ func sendGreetMessage(conn net.Conn, c clients) {
 	}
 	fmt.Fprintln(conn, "]")
 	fmt.Fprint(conn, "Enter your client name: ")
+}
+
+func printMessage(c *client, msg *message) error {
+	if c.name == msg.sender {
+		return nil
+	}
+	_, err := fmt.Fprintf(c.conn, "[%s] %s\n", msg.sender, msg.text)
+
+	return err
 }
