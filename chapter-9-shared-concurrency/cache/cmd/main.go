@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/lapeko/books__go_programming_language/chapter-9-shared-concurrency/internal"
-	"github.com/lapeko/books__go_programming_language/chapter-9-shared-concurrency/utils"
+	"github.com/lapeko/books__go_programming_language/chapter-9-shared-concurrency/cache/internal"
+	"github.com/lapeko/books__go_programming_language/chapter-9-shared-concurrency/cache/utils"
 	"os"
 	"time"
 )
