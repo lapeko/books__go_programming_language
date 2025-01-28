@@ -8,9 +8,11 @@ import (
 )
 
 func main() {
-	var i interface{} = 3
-	fmt.Println(reflect.TypeOf(i).String())
-	var reader io.Reader = os.Stdin
-	fmt.Println(reflect.TypeOf(reader).String())
-	fmt.Println(reflect.TypeOf(3).String())
+	var w io.Writer = os.Stdin
+	v := reflect.ValueOf(w)
+	fmt.Println(v.Kind())
+	fmt.Println(v.String())
+	fmt.Println(v.Type())
+	fmt.Println(v.Interface())
+	fmt.Println(v.Type() == reflect.TypeOf(os.Stdin))
 }
