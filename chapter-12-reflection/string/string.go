@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"reflect"
+)
 
 func String(a any) string {
 	type stringer interface {
@@ -17,7 +20,11 @@ func String(a any) string {
 		return a
 	case bool:
 		return fmt.Sprintf("%t", a)
+	}
+	switch reflect.ValueOf(a).Kind() {
+	case reflect.Chan, reflect.Func, reflect.Ptr, reflect.Slice, reflect.Map:
+		return fmt.Sprintf("%s", reflect.ValueOf(a).Interface())
 	default:
-		return "What?"
+		return `Nobody knows ¯\_(ツ)_/¯`
 	}
 }
