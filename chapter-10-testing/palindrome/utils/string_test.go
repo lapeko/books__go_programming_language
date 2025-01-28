@@ -3,29 +3,28 @@ package utils
 import "testing"
 
 func TestIsPalindrome(t *testing.T) {
-	if !IsPalindrome("detartrated") {
-		t.Error(`IsPalindrome("detartrated") = false`)
+	var tests = []struct {
+		input  string
+		expect bool
+	}{
+		{"", true},
+		{"a", true},
+		{"aa", true},
+		{"ab", false},
+		{"kayak", true},
+		{"detartrated", true},
+		{"A man, a plan, a canal: Panama", true},
+		{"Evil I did dwell; lewd did I live.", true},
+		{"Able was I ere I saw Elba", true},
+		{"été", true},
+		{"Et se resservir, ivresse reste.", true},
+		{"palindrome", false},
+		{"desserts", false},
 	}
-	if !IsPalindrome("kayak") {
-		t.Error(`IsPalindrome("kayak") = false`)
-	}
-}
 
-func TestNonPalindrome(t *testing.T) {
-	if IsPalindrome("123") {
-		t.Error(`IsPalindrome("123") = true`)
-	}
-}
-
-func TestFrenchPalindrome(t *testing.T) {
-	if !IsPalindrome("été") {
-		t.Error(`IsPalindrome("été") = false`)
-	}
-}
-
-func TestCanalPalindrome(t *testing.T) {
-	input := "A man, a plan, a canal: Panama"
-	if !IsPalindrome(input) {
-		t.Errorf(`IsPalindrome(%q) = false`, input)
+	for _, test := range tests {
+		if got := IsPalindrome(test.input); got != test.expect {
+			t.Errorf(`IsPalindrome("%s") = %t`, test.input, got)
+		}
 	}
 }
