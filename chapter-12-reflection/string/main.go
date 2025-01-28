@@ -1,7 +1,16 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"io"
+	"os"
+	"reflect"
+)
 
 func main() {
-	fmt.Println(String(false))
+	var i interface{} = 3
+	fmt.Println(reflect.TypeOf(i).String())
+	var reader io.Reader = os.Stdin
+	fmt.Println(reflect.TypeOf(reader).String())
+	fmt.Println(reflect.TypeOf(3).String())
 }
