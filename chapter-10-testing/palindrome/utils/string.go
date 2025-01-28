@@ -1,9 +1,17 @@
 package utils
 
+import (
+	"regexp"
+	"strings"
+)
+
 func IsPalindrome(text string) bool {
-	n := len(text)
+	re := regexp.MustCompile(`[^\p{L}\p{N}]`)
+	cleaned := re.ReplaceAllString(text, "")
+	runes := []rune(strings.ToLower(cleaned))
+	n := len(runes)
 	for i := 0; i < n/2; i++ {
-		if text[i] != text[n-i-1] {
+		if runes[i] != runes[n-i-1] {
 			return false
 		}
 	}
