@@ -23,7 +23,7 @@ func TestEcho(t *testing.T) {
 		buff := new(bytes.Buffer)
 		echo(buff, test.args, test.newLine, &test.divider)
 		if buff.String() != test.expResult {
-			t.Errorf(`techo(buff, %v, %t, %s) printed %s when %s expected`, test.args, test.newLine, test.divider, buff.String(), test.expResult)
+			t.Errorf(`techo(buff, %v, %t, %q) printed %q when %q expected`, test.args, test.newLine, test.divider, buff.String(), test.expResult)
 		}
 	}
 }
