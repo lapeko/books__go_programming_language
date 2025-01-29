@@ -1,7 +1,11 @@
 package intset
 
-import "testing"
+import (
+	"github.com/lapeko/books__go_programming_language/intset/pkg/testutils"
+	"testing"
+)
 
 func TestNew(t *testing.T) {
-	New
+	i := New()
+	testutils.EqualType(t, i, &intSet{})
 }
