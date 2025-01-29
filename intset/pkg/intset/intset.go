@@ -1,33 +1,41 @@
 package intset
 
-type intSet struct {
-}
-
 type stringer interface {
 	String() string
 }
 
+type Engine interface {
+	stringer
+	Put(num uint64) error
+	Delete(num uint64)
+	Has(num uint64) bool
+}
+
+type intSet struct {
+	Engine
+}
+
 type IntSet interface {
 	stringer
-	Add(num int)
-	Delete(num int)
-	Has(num int) bool
-	Fill(nums []int)
+	Add(num uint64)
+	Delete(num uint64)
+	Has(num uint64) bool
+	Fill(nums []uint64)
 }
 
-func New() IntSet {
-	return &intSet{}
+func New(e Engine) IntSet {
+	return &intSet{e}
 }
 
-func (i *intSet) Add(num int) {}
+func (i *intSet) Add(num uint64) {}
 
-func (i *intSet) Delete(num int) {}
+func (i *intSet) Delete(num uint64) {}
 
-func (i *intSet) Has(num int) bool {
+func (i *intSet) Has(num uint64) bool {
 	return false
 }
 
-func (i *intSet) Fill(nums []int) {}
+func (i *intSet) Fill(nums []uint64) {}
 
 func (i *intSet) String() string {
 	return ""

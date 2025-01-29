@@ -1,8 +1,9 @@
-package utils
+package engine
 
 import (
 	"errors"
 	"fmt"
+	"github.com/lapeko/books__go_programming_language/intset/pkg/intset/utils"
 	"sync"
 	"testing"
 )
@@ -52,6 +53,13 @@ func TestBinaryEncodeError(t *testing.T) {
 	}
 }
 
+func TestNew(t *testing.T) {
+	eng := New()
+	if !utils.EqualType(eng, &binarySetEngine{}) {
+		t.Errorf("New() should return %T type instead of %T", &binarySetEngine{}, eng)
+	}
+}
+
 func TestPutIntoStorage(t *testing.T) {
 	tests := []struct {
 		name            string
@@ -69,14 +77,14 @@ func TestPutIntoStorage(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		engine := binarySetEngine{storage: tt.storage}
 		t.Run(tt.name, func(t *testing.T) {
 			srcStorage := fmt.Sprint(tt.storage)
-			res, err := putIntoStorage(tt.storage, tt.num)
-			if err != nil {
+			if err := engine.Put(tt.num); err != nil {
 				t.Errorf("Unexpected error: %v", err)
 			}
-			if !Compare(res, tt.expectedStorage) {
-				t.Errorf("Put %d into %s = %v. Not equal to %v", tt.num, srcStorage, res, tt.expectedStorage)
+			if !utils.Compare(engine.storage, tt.expectedStorage) {
+				t.Errorf("Put %d into %s = %v. Not equal to %v", tt.num, srcStorage, engine.storage, tt.expectedStorage)
 			}
 		})
 	}
@@ -94,7 +102,8 @@ func TestPutIntoStorageError(t *testing.T) {
 		mut.Unlock()
 	}()
 
-	_, err := putIntoStorage([]uint64{}, 0)
+	engine := binarySetEngine{storage: []uint64{}}
+	err := engine.Put(1)
 	if err == nil || err.Error() != testErrMsg {
 		t.Errorf("Expected error: %q have not cought", testErrMsg)
 	}
