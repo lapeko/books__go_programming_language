@@ -6,7 +6,7 @@ import (
 
 const maxLimit = 64
 
-func binaryEncode(num uint64) (uint64, error) {
+var binaryEncode = func(num uint64) (uint64, error) {
 	if num >= maxLimit {
 		return 0, fmt.Errorf("too big payload %d. Should be less %d", num, maxLimit)
 	}
