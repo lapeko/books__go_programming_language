@@ -17,4 +17,11 @@ func main() {
 	fmt.Println(v.Type())
 	fmt.Println(v.Interface())
 	fmt.Println(v.Type() == reflect.TypeOf(os.Stdin))
+
+	var x interface{} = 3
+	v = reflect.ValueOf(&x)
+	fmt.Println(v.Type())
+	fmt.Println(v.Kind())
+	fmt.Println(v.Elem().Kind())
+	fmt.Println(v.Elem().Elem().Kind())
 }
