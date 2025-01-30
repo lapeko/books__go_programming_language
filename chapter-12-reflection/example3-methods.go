@@ -32,4 +32,14 @@ func main() {
 	for i := 0; i < t2.NumMethod(); i++ {
 		fmt.Println(t2.Method(i).Name)
 	}
+
+	vAwards := v.Elem().FieldByName("Awards")
+	if vAwards.CanSet() {
+		vAwards.Set(reflect.Append(vAwards, reflect.ValueOf("qwe")))
+	} else {
+		fmt.Println("awards field is not addressable")
+	}
+	tAwards, _ := t.Elem().FieldByName("Awards")
+	fmt.Println(tAwards.Tag.Get("json"))
+
 }
