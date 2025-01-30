@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/lapeko/books__go_programming_language/intset/pkg/intset"
-	binaryEngine "github.com/lapeko/books__go_programming_language/intset/pkg/intset/engine/binary-engine"
-	mapEngine "github.com/lapeko/books__go_programming_language/intset/pkg/intset/engine/map-engine"
+	binaryEngine "github.com/lapeko/books__go_programming_language/intset/pkg/intset/binary-engine"
+	mapEngine "github.com/lapeko/books__go_programming_language/intset/pkg/intset/map-engine"
 )
 
 const lowValueLimit = 1000000
