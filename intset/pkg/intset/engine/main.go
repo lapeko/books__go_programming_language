@@ -57,10 +57,11 @@ func (b *binarySetEngine) Has(num uint64) bool {
 func (b *binarySetEngine) String() string {
 	sb := strings.Builder{}
 	sb.WriteString("{ ")
-	for idx, encodedNum := range b.storage {
-		for i := uint64(1); i <= maxLimit; i++ {
-			if encodedNum == encodedNum&i {
-				sb.WriteString(fmt.Sprintf("%d ", uint64(idx)*maxLimit+i))
+	for idx := range b.storage {
+		for i := uint64(0); i < maxLimit; i++ {
+			currentNum := uint64(maxLimit*idx) + i
+			if b.Has(currentNum) {
+				sb.WriteString(fmt.Sprintf("%d ", currentNum))
 			}
 		}
 	}

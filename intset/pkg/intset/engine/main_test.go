@@ -181,6 +181,26 @@ func TestBinarySetEngine_Has(t *testing.T) {
 	}
 }
 
+func TestBinarySetEngine_String(t *testing.T) {
+	tests := []struct {
+		storage []uint64
+		expect  string
+	}{
+		{[]uint64{0b00000000}, "{ }"},
+		{[]uint64{0b00000001}, "{ 0 }"},
+		{[]uint64{0b00000011}, "{ 0 1 }"},
+		{[]uint64{0b00001010}, "{ 1 3 }"},
+		{[]uint64{0b11111111, 0, 1}, "{ 0 1 2 3 4 5 6 7 128 }"},
+	}
+
+	for _, tt := range tests {
+		e := binarySetEngine{storage: tt.storage}
+		if res := e.String(); res != tt.expect {
+			t.Errorf("binarySetEngine{%v}.String() = %q. Expected: %q", tt.storage, res, tt.expect)
+		}
+	}
+}
+
 func TestSubtractCandidate(t *testing.T) {
 	for _, tt := range substracts {
 		res, err := subtractCandidate(tt.subtrahend, tt.subtractor)
