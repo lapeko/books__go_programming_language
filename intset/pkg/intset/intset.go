@@ -12,7 +12,7 @@ type Engine interface {
 }
 
 type intSet struct {
-	Engine
+	engine Engine
 }
 
 type IntSet interface {
@@ -27,16 +27,24 @@ func New(e Engine) IntSet {
 	return &intSet{e}
 }
 
-func (i *intSet) Add(num uint64) {}
-
-func (i *intSet) Delete(num uint64) {}
-
-func (i *intSet) Has(num uint64) bool {
-	return false
+func (i *intSet) Add(num uint64) {
+	i.engine.Put(num)
 }
 
-func (i *intSet) Fill(nums []uint64) {}
+func (i *intSet) Delete(num uint64) {
+	i.engine.Delete(num)
+}
+
+func (i *intSet) Has(num uint64) bool {
+	return i.engine.Has(num)
+}
+
+func (i *intSet) Fill(nums []uint64) {
+	for _, num := range nums {
+		i.engine.Put(num)
+	}
+}
 
 func (i *intSet) String() string {
-	return ""
+	return i.engine.String()
 }
