@@ -1,4 +1,4 @@
-package engine
+package binary_engine
 
 import (
 	"fmt"
@@ -12,15 +12,15 @@ type BinarySet interface {
 	intset.Engine
 }
 
-type binarySetEngine struct {
+type binaryEngine struct {
 	storage []uint64
 }
 
 func New() intset.Engine {
-	return &binarySetEngine{storage: []uint64{0}}
+	return &binaryEngine{storage: []uint64{0}}
 }
 
-func (b *binarySetEngine) Put(num uint64) {
+func (b *binaryEngine) Put(num uint64) {
 	idx, rest := int(num/maxLimit), num%maxLimit
 	if len(b.storage)-1 < idx {
 		for i := len(b.storage) - 1; i < idx; i++ {
@@ -34,7 +34,7 @@ func (b *binarySetEngine) Put(num uint64) {
 	b.storage[idx] = b.storage[idx] | bin
 }
 
-func (b *binarySetEngine) Delete(num uint64) {
+func (b *binaryEngine) Delete(num uint64) {
 	idx, rest := int(num/maxLimit), num%maxLimit
 	if idx >= len(b.storage) {
 		return
@@ -46,7 +46,7 @@ func (b *binarySetEngine) Delete(num uint64) {
 	b.storage[idx] = res
 }
 
-func (b *binarySetEngine) Has(num uint64) bool {
+func (b *binaryEngine) Has(num uint64) bool {
 	idx, rest := int(num/maxLimit), num%maxLimit
 	if idx >= len(b.storage) {
 		return false
@@ -54,7 +54,7 @@ func (b *binarySetEngine) Has(num uint64) bool {
 	return b.storage[idx]&(1<<rest) != 0
 }
 
-func (b *binarySetEngine) String() string {
+func (b *binaryEngine) String() string {
 	sb := strings.Builder{}
 	sb.WriteString("{ ")
 	for idx := range b.storage {

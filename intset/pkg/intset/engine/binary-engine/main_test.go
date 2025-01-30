@@ -1,4 +1,4 @@
-package engine
+package binary_engine
 
 import (
 	"errors"
@@ -52,8 +52,8 @@ func TestBinaryEncodeError(t *testing.T) {
 
 func TestNew(t *testing.T) {
 	eng := New()
-	if !utils.EqualType(eng, &binarySetEngine{}) {
-		t.Errorf("New() should return %T type instead of %T", &binarySetEngine{}, eng)
+	if !utils.EqualType(eng, &binaryEngine{}) {
+		t.Errorf("New() should return %T type instead of %T", &binaryEngine{}, eng)
 	}
 }
 
@@ -74,7 +74,7 @@ func TestBinarySetEngine_Put(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		engine := binarySetEngine{storage: tt.storage}
+		engine := binaryEngine{storage: tt.storage}
 		t.Run(tt.name, func(t *testing.T) {
 			srcStorage := fmt.Sprint(tt.storage)
 			engine.Put(tt.num)
@@ -104,7 +104,7 @@ func TestBinarySetEngine_Put_Error(t *testing.T) {
 		}
 	}()
 
-	engine := binarySetEngine{storage: []uint64{}}
+	engine := binaryEngine{storage: []uint64{}}
 	engine.Put(1)
 }
 
@@ -120,7 +120,7 @@ var substracts = []struct{ subtrahend, subtractor, expect uint64 }{
 
 func TestBinarySetEngine_Delete(t *testing.T) {
 	for _, tt := range substracts {
-		engine := binarySetEngine{storage: []uint64{tt.subtrahend}}
+		engine := binaryEngine{storage: []uint64{tt.subtrahend}}
 		name := fmt.Sprintf("%d Delete(%d) expects %d", engine.storage[0], tt.subtractor, tt.expect)
 		t.Run(name, func(t *testing.T) {
 			engine.Delete(tt.subtractor)
@@ -130,7 +130,7 @@ func TestBinarySetEngine_Delete(t *testing.T) {
 		})
 	}
 
-	engine := binarySetEngine{storage: []uint64{0}}
+	engine := binaryEngine{storage: []uint64{0}}
 	engine.Delete(maxLimit)
 	if !utils.Compare(engine.storage, []uint64{0}) {
 		t.Errorf("%v Delete(%d) expects %d", []uint64{0}, maxLimit, []uint64{0})
@@ -156,7 +156,7 @@ func TestBinarySetEngine_Delete_Error(t *testing.T) {
 		}
 	}()
 
-	engine := binarySetEngine{storage: []uint64{0}}
+	engine := binaryEngine{storage: []uint64{0}}
 	engine.Delete(1)
 }
 
@@ -174,9 +174,9 @@ func TestBinarySetEngine_Has(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		e := binarySetEngine{storage: tt.initStorage}
+		e := binaryEngine{storage: tt.initStorage}
 		if res := e.Has(tt.checkNum); res != tt.expected {
-			t.Errorf("binarySetEngine{%v}.Has(%d) = %t when expected %t", tt.initStorage, tt.checkNum, res, tt.expected)
+			t.Errorf("binaryEngine{%v}.Has(%d) = %t when expected %t", tt.initStorage, tt.checkNum, res, tt.expected)
 		}
 	}
 }
@@ -194,9 +194,9 @@ func TestBinarySetEngine_String(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		e := binarySetEngine{storage: tt.storage}
+		e := binaryEngine{storage: tt.storage}
 		if res := e.String(); res != tt.expect {
-			t.Errorf("binarySetEngine{%v}.String() = %q. Expected: %q", tt.storage, res, tt.expect)
+			t.Errorf("binaryEngine{%v}.String() = %q. Expected: %q", tt.storage, res, tt.expect)
 		}
 	}
 }
