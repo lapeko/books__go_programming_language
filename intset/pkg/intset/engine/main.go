@@ -51,7 +51,7 @@ func (b *binarySetEngine) Has(num uint64) bool {
 	if idx >= len(b.storage) {
 		return false
 	}
-	return b.storage[idx] == b.storage[idx]|1<<rest
+	return b.storage[idx]&(1<<rest) != 0
 }
 
 func (b *binarySetEngine) String() string {
