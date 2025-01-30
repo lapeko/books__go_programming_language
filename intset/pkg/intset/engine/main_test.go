@@ -22,10 +22,7 @@ const (
 var mut sync.Mutex
 
 func TestBinaryEncode(t *testing.T) {
-	tests := []struct {
-		input  uint64
-		output uint64
-	}{
+	tests := []struct{ input, output uint64 }{
 		{input: 0, output: exp0},
 		{input: 10, output: exp10},
 		{input: 20, output: exp20},
@@ -60,7 +57,7 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func TestPutIntoStorage(t *testing.T) {
+func TestBinarySetEngine_Put(t *testing.T) {
 	tests := []struct {
 		name            string
 		storage         []uint64
@@ -80,9 +77,7 @@ func TestPutIntoStorage(t *testing.T) {
 		engine := binarySetEngine{storage: tt.storage}
 		t.Run(tt.name, func(t *testing.T) {
 			srcStorage := fmt.Sprint(tt.storage)
-			if err := engine.Put(tt.num); err != nil {
-				t.Errorf("Unexpected error: %v", err)
-			}
+			engine.Put(tt.num)
 			if !utils.Compare(engine.storage, tt.expectedStorage) {
 				t.Errorf("Put %d into %s = %v. Not equal to %v", tt.num, srcStorage, engine.storage, tt.expectedStorage)
 			}
@@ -90,21 +85,116 @@ func TestPutIntoStorage(t *testing.T) {
 	}
 }
 
-func TestPutIntoStorageError(t *testing.T) {
+func TestBinarySetEngine_Put_Error(t *testing.T) {
+	testErrMsg := "binaryEncode error"
 	mut.Lock()
 	orig := binaryEncode
-	testErrMsg := "binaryEncode error"
 	binaryEncode = func(num uint64) (uint64, error) {
 		return 0, errors.New(testErrMsg)
 	}
 	defer func() {
 		binaryEncode = orig
 		mut.Unlock()
+		if r := recover(); r != nil {
+			if fmt.Sprintf("%s", r) != testErrMsg {
+				t.Errorf("not expected received error: %q. Expected: %q", r, testErrMsg)
+			}
+		} else {
+			t.Errorf("expected panic but got none")
+		}
 	}()
 
 	engine := binarySetEngine{storage: []uint64{}}
-	err := engine.Put(1)
-	if err == nil || err.Error() != testErrMsg {
-		t.Errorf("Expected error: %q have not cought", testErrMsg)
+	engine.Put(1)
+}
+
+var substracts = []struct{ subtrahend, subtractor, expect uint64 }{
+	{0b00000001, 0, 0b00000000},
+	{0b11111111, 0, 0b11111110},
+	{0b11111110, 0, 0b11111110},
+	{0b11111111, 0, 0b11111110},
+	{0b11111110, 1, 0b11111100},
+	{0b10000000, 7, 0b00000000},
+	{0b10010000, 4, 0b10000000},
+}
+
+func TestBinarySetEngine_Delete(t *testing.T) {
+	for _, tt := range substracts {
+		engine := binarySetEngine{storage: []uint64{tt.subtrahend}}
+		name := fmt.Sprintf("%d Delete(%d) expects %d", engine.storage[0], tt.subtractor, tt.expect)
+		t.Run(name, func(t *testing.T) {
+			engine.Delete(tt.subtractor)
+			if engine.storage[0] != tt.expect {
+				t.Errorf("%s. Received %d", name, engine.storage[0])
+			}
+		})
+	}
+
+	engine := binarySetEngine{storage: []uint64{0}}
+	engine.Delete(maxLimit)
+	if !utils.Compare(engine.storage, []uint64{0}) {
+		t.Errorf("%v Delete(%d) expects %d", []uint64{0}, maxLimit, []uint64{0})
+	}
+}
+
+func TestBinarySetEngine_Delete_Error(t *testing.T) {
+	testErrMsg := "subtractCandidate error"
+	mut.Lock()
+	orig := subtractCandidate
+	subtractCandidate = func(storage, bt uint64) (uint64, error) {
+		return 0, errors.New(testErrMsg)
+	}
+	defer func() {
+		subtractCandidate = orig
+		mut.Unlock()
+		if r := recover(); r != nil {
+			if fmt.Sprintf("%s", r) != testErrMsg {
+				t.Errorf("not expected received error: %q. Expected: %q", r, testErrMsg)
+			}
+		} else {
+			t.Errorf("expected panic but got none")
+		}
+	}()
+
+	engine := binarySetEngine{storage: []uint64{0}}
+	engine.Delete(1)
+}
+
+func TestBinarySetEngine_Has(t *testing.T) {
+	tests := []struct {
+		initStorage []uint64
+		checkNum    uint64
+		expected    bool
+	}{
+		{[]uint64{0b00000000}, 0, false},
+		{[]uint64{0b00000001}, 0, true},
+		{[]uint64{0b00000000}, 64, false},
+		{[]uint64{0b10000000}, 7, true},
+		{[]uint64{0, 0, 1}, 128, true},
+	}
+
+	for _, tt := range tests {
+		e := binarySetEngine{storage: tt.initStorage}
+		if res := e.Has(tt.checkNum); res != tt.expected {
+			t.Errorf("binarySetEngine{%v}.Has(%d) = %t when expected %t", tt.initStorage, tt.checkNum, res, tt.expected)
+		}
+	}
+}
+
+func TestSubtractCandidate(t *testing.T) {
+	for _, tt := range substracts {
+		res, err := subtractCandidate(tt.subtrahend, tt.subtractor)
+		if err != nil {
+			t.Errorf("unexpected error %q when subtractCandidate(%d, %d) expects %d", err, tt.subtrahend, tt.subtractor, tt.expect)
+		}
+		if res != tt.expect {
+			t.Errorf("subtractCandidate(%d, %d) = %d. Expected %d", tt.subtrahend, tt.subtractor, res, tt.expect)
+		}
+	}
+}
+
+func TestSubtractCandidateError(t *testing.T) {
+	if _, err := subtractCandidate(0, maxLimit); err == nil {
+		t.Errorf("subtractCandidate(%d) should return an error", maxLimit)
 	}
 }

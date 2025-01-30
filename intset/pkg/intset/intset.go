@@ -6,7 +6,7 @@ type stringer interface {
 
 type Engine interface {
 	stringer
-	Put(num uint64) error
+	Put(num uint64)
 	Delete(num uint64)
 	Has(num uint64) bool
 }
