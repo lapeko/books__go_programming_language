@@ -44,7 +44,7 @@ func (e *encoder) encode(v reflect.Value) {
 }
 
 func (e *encoder) encodeStruct(v reflect.Value) {
-	e.WriteString("( ")
+	e.WriteString("{ ")
 	t := v.Type()
 	for i := 0; i < t.NumField(); i++ {
 		if i != 0 {
@@ -54,7 +54,7 @@ func (e *encoder) encodeStruct(v reflect.Value) {
 		e.WriteString(fmt.Sprintf("%s: ", f.Name))
 		e.encode(v.Field(i))
 	}
-	e.WriteString(" )")
+	e.WriteString(" }")
 }
 
 func (e *encoder) encodeIterable(v reflect.Value) {
@@ -99,4 +99,18 @@ func (e *encoder) WriteString(s string) {
 
 func (e *encoder) String() string {
 	return e.b.String()
+}
+
+type Actor struct {
+	Role string
+	Name string
+}
+
+type Movie struct {
+	Title    string
+	Subtitle string
+	Year     int
+	Actors   []Actor
+	Oscars   []string
+	Sequel   *string
 }
